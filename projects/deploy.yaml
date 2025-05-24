@@ -36,7 +36,7 @@ spec:
         - name: GIT_SYNC_REPO
           value: https://github.com/kyawzinmyolwin/sidecar-syn.git
         - name: GIT_SYNC_BRANCH
-          value: main
+          value: projects
         - name: GIT_SYNC_DEPTH
           value: "1"
         - name: GIT_SYNC_DEST
