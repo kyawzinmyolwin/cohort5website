@@ -18,29 +18,35 @@ spec:
       labels:
         app: cohort5-projects
     spec:
-  containers:
-  - name: ctr-web
-    image: nginx
-    volumeMounts:
-    - name: html
-      mountPath: /usr/share/nginx/
-  - name: ctr-sync
-    image: k8s.gcr.io/git-sync:v3.1.6
-    volumeMounts:
-    - name: html
-      mountPath: /tmp/git
-    env:
-    - name: GIT_SYNC_REPO
-      value: https://github.com/kyawzinmyolwin/cohort5website.git
-    - name: GIT_SYNC_BRANCH
-      value: projects
-    - name: GIT_SYNC_DEPTH
-      value: "1"
-    - name: GIT_SYNC_DEST
-      value: "html"
-  volumes:
-  - name: html
-    emptyDir: {}
+      containers:
+      - name: ctr-web
+        image: nginx
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html/
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      - name: ctr-sync
+        image: k8s.gcr.io/git-sync:v3.1.6
+        volumeMounts:
+        - name: html
+          mountPath: /tmp/git
+        env:
+        - name: GIT_SYNC_REPO
+          value: https://github.com/kyawzinmyolwin/sidecar-syn.git
+        - name: GIT_SYNC_BRANCH
+          value: main
+        - name: GIT_SYNC_DEPTH
+          value: "1"
+        - name: GIT_SYNC_DEST
+          value: "html"
+      volumes:
+      - name: html
+        emptyDir: {}
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
 ---
 apiVersion: v1
 kind: Service
