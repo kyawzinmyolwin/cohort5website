@@ -34,7 +34,7 @@ spec:
           mountPath: /tmp/git
         env:
         - name: GIT_SYNC_REPO
-          value: https://github.com/kyawzinmyolwin/sidecar-syn.git
+          value: https://github.com/kyawzinmyolwin/cohort5website.git
         - name: GIT_SYNC_BRANCH
           value: projects
         - name: GIT_SYNC_DEPTH
