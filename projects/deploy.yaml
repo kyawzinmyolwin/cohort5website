@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cohort5-projects
+  name: cohort5-projects
+  namespace: co5website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cohort5-projects
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cohort5-projects
+    spec:
+  containers:
+  - name: ctr-web
+    image: nginx
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/
+  - name: ctr-sync
+    image: k8s.gcr.io/git-sync:v3.1.6
+    volumeMounts:
+    - name: html
+      mountPath: /tmp/git
+    env:
+    - name: GIT_SYNC_REPO
+      value: https://github.com/kyawzinmyolwin/cohort5website.git
+    - name: GIT_SYNC_BRANCH
+      value: projects
+    - name: GIT_SYNC_DEPTH
+      value: "1"
+    - name: GIT_SYNC_DEST
+      value: "html"
+  volumes:
+  - name: html
+    emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-cohort5-projects
+  namespace: co5website
+spec:
+  selector:
+    app: cohort5-projects
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: NodePort
