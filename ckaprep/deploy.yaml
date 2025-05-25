@@ -28,7 +28,7 @@ spec:
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
         ports:
-        - containerPort: 80
+        - containerPort: 8083
           name: http
           protocol: TCP
       - name: ctr-sync
@@ -62,6 +62,6 @@ spec:
     app: cohort5-ckaprep
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: 8083
     protocol: TCP
   type: NodePort
