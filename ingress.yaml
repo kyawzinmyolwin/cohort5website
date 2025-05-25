@@ -14,7 +14,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: svc-cohort5-main
+            name: svc-main
             port:
               number: 80
       - path: /projects
@@ -30,4 +30,4 @@ spec:
           service:
             name: svc-notes
             port:
-              number: 8082       
+              number: 80
