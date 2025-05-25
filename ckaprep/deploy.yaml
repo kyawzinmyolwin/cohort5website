@@ -27,10 +27,10 @@ spec:
         - name: nginx-config-volume
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
-      ports:
-      - containerPort: 8083
-        name: http
-        protocol: TCP
+        ports:
+        - containerPort: 8083
+          name: http
+          protocol: TCP
       - name: ctr-sync
         image: k8s.gcr.io/git-sync:v3.1.6
         volumeMounts:
