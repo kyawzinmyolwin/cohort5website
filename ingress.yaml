@@ -31,3 +31,10 @@ spec:
             name: svc-notes
             port:
               number: 80
+      - path: /ckaprep
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-notes
+            port:
+              number: 8083            
