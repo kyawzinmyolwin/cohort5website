@@ -61,7 +61,7 @@ spec:
   selector:
     app: cohort5-ckaprep
   ports:
-  - port: 80
+  - port: 8083
     targetPort: 8083
     protocol: TCP
   type: NodePort
