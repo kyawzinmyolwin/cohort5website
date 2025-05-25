@@ -46,6 +46,25 @@ data:
                 root   /usr/share/nginx/html; # Keep this as is
             }
         }
+        server { # New server block for ckaprep
+            listen 8083;
+            server_name cohort5.io; # Or a specific subdomain if you prefer
 
+            location /ckaprep {
+                root /usr/share/nginx/html/ckaprep; # Adjust the root path as needed
+                index index.html index.htm;
+            }
+
+            # You might want a more specific location for just /ckaprep/
+            location = /ckaprep/ {
+                root /usr/share/nginx/html/ckaprep;
+                index index.html index.htm;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+        }
         include /etc/nginx/conf.d/*.conf;
     }
