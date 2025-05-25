@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: co5website-ingress
+  namespace: co5website
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: cohort5.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-cohort5-main
+            port:
+              number: 80
+      - path: /projects
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-cohort5-projects
+            port:
+              number: 80
+      - path: /notes
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-notes
+            port:
+              number: 8082       
