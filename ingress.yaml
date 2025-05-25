@@ -37,4 +37,4 @@ spec:
           service:
             name: svc-ckaprep
             port:
-              number: 8083            
+              number: 80           
