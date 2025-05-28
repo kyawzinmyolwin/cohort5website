@@ -6,6 +6,10 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
 spec:
+  tls:
+  - hosts:
+    - cohort5.io
+    secretName: cohort5-tls-secret
   rules:
   - host: cohort5.io
     http:
