@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- Background setup from index.html -->
+<style>
+  body {
+    background-image: url('background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+</style>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Building a Kubernetes Lab: From Pods to Ingress with GitHub Sync</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      line-height: 1.6;
+      color: #222;
+      background-color: #f9f9f9;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    pre {
+      background-color: #272822;
+      color: #f8f8f2;
+      padding: 1rem;
+      overflow-x: auto;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9rem;
+    }
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    blockquote {
+      border-left: 4px solid #ccc;
+      margin: 1rem 0;
+      padding-left: 1rem;
+      color: #666;
+      font-style: italic;
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Building a Kubernetes Lab: From Pods to Ingress with GitHub Sync</h1>
+
+  <p>
+    As part of my hands-on Kubernetes lab, I started with a foundational but powerful workflow:
+    setting up a namespace, deploying a pod with both a main and sidecar container, exposing it via a
+    Kubernetes service, and eventually routing external traffic through an NGINX Ingress Controller.
+  </p>
+
+  <p>
+    In this post, I’ll walk through the essential steps, explain my choices, and highlight key commands
+    for anyone looking to get started with similar setups.
+  </p>
+
+  <h2>🧱 Step 1: Creating a Namespace</h2>
+  <p>
+    Namespaces in Kubernetes help isolate resources. For my lab, I created a dedicated namespace to
+    keep things organized:
+  </p>
+  <pre><code>kubectl create namespace lab-app</code></pre>
+  <p>
+    Now, all my resources can live within <code>lab-app</code>, ensuring they don’t conflict with
+    anything else in the cluster.
+  </p>
+
+  <h2>📦 Step 2: Creating a Pod with a Sidecar Container</h2>
+  <p>In the pod, I wanted two containers:</p>
+  <ul>
+    <li><strong>Main Container:</strong> Runs the core application (e.g., a simple HTTP server or a content viewer).</li>
+    <li><strong>Sidecar Container:</strong> Periodically syncs content from a GitHub repository using <code>git</code>.</li>
+  </ul>
+
+  <p>Here's a sample YAML for the pod:</p>
+  <pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: content-sync-pod
+  namespace: lab-app
+spec:
+  containers:
+    - name: main-app
+      image: nginx
+      volumeMounts:
+        - name: content
+          mountPath: /usr/share/nginx/html
+    - name: git-sync
+      image: k8s.gcr.io/git-sync/git-sync:v3.4.0
+      env:
+        - name: GIT_SYNC_REPO
+          value: "https://github.com/your-user/your-repo.git"
+        - name: GIT_SYNC_BRANCH
+          value: "main"
+        - name: GIT_SYNC_ROOT
+          value: "/git"
+        - name: GIT_SYNC_DEST
+          value: "html"
+        - name: GIT_SYNC_ONE_TIME
+          value: "false"
+        - name: GIT_SYNC_WAIT
+          value: "30"
+      volumeMounts:
+        - name: content
+          mountPath: /git
+  volumes:
+    - name: content
+      emptyDir: {}
+</code></pre>
+
+  <p>
+    This pattern allows the <code>main-app</code> container to serve up-to-date content from GitHub,
+    while the <code>git-sync</code> sidecar keeps it fresh.
+  </p>
+
+  <h2>🌐 Step 3: Exposing the Pod via a Service</h2>
+  <p>
+    To make the pod reachable within the cluster, I created a ClusterIP service:
+  </p>
+  <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: content-service
+  namespace: lab-app
+spec:
+  selector:
+    app: content-sync-pod
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+</code></pre>
+
+  <blockquote>
+    Make sure your pod has the correct label (<code>app: content-sync-pod</code>) for the service to target it.
+  </blockquote>
+
+  <h2>🌍 Step 4: Setting Up Ingress with NGINX Controller</h2>
+  <p>
+    To expose my service outside the cluster (on the host machine), I used an <strong>NGINX Ingress Controller</strong>.
+  </p>
+
+  <h3>Step 4.1: Deploy the NGINX Ingress Controller</h3>
+  <p>
+    I installed it using the official Helm chart (Helm must be installed):
+  </p>
+  <pre><code>helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install nginx-ingress ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
+</code></pre>
+  <p>This sets up a LoadBalancer/NodePort service and the necessary controller pods.</p>
+
+  <h3>Step 4.2: Create an Ingress Resource</h3>
+  <p>
+    Now I defined an Ingress resource to route traffic based on hostname or path:
+  </p>
+  <pre><code>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: content-ingress
+  namespace: lab-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: lab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: content-service
+                port:
+                  number: 80
+</code></pre>
+  <p>
+    Be sure to add <code>lab.local</code> to your <code>/etc/hosts</code> file and point it to your
+    host IP or <code>127.0.0.1</code> for local testing.
+  </p>
+
+  <h3>Step 4.3: Handling HTTP and HTTPS Traffic</h3>
+  <p>
+    You can configure HTTPS using a TLS section in the Ingress and a <code>Secret</code> containing a certificate and key.
+    To make it dynamic, I used a <strong>ConfigMap</strong> for custom NGINX behaviors:
+  </p>
+  <pre><code>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-custom-config
+  namespace: ingress-nginx
+data:
+  server-snippet: |
+    server_tokens off;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+</code></pre>
+  <p>
+    You can link this ConfigMap to the NGINX controller by passing it during Helm install/upgrade using:
+  </p>
+  <pre><code>helm upgrade nginx-ingress ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --set controller.configMap.name=nginx-custom-config
+</code></pre>
+
+  <h2>✅ Final Test</h2>
+  <p>
+    Once everything is deployed, you can access your content using the hostname (e.g., <code>http://lab.local</code>)
+    in your browser. You’ll see content synced from your GitHub repo served by the main container,
+    with traffic routed via the Ingress controller.
+  </p>
+
+  <h2>🧪 What’s Next?</h2>
+  <p>In the next phase of my lab, I’ll explore:</p>
+  <ul>
+    <li>Securing Ingress with HTTPS and Let’s Encrypt via cert-manager</li>
+    <li>Rolling updates for pods</li>
+    <li>Multi-service routing</li>
+    <li>RBAC and network policies</li>
+  </ul>
+
+  <p>
+    If you're just getting started with Kubernetes, this setup gives you practical exposure to multiple core
+    concepts — pods, sidecars, services, ingress, Helm, and GitHub integration.
+  </p>
+
+  <p>Feel free to try it out and make it your own. Happy learning! 🙌</p>
+</body>
+</html>
